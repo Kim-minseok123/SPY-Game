@@ -5,6 +5,9 @@ using UnityEngine;
 public class TitleManager : MonoBehaviour
 {
     // Start is called before the first frame update
+    void Awake() {
+        Screen.SetResolution(1440, 3200, false);
+    }
     void Start() {
         BlackPannel blackPannel = BlackPannel.instance;
         StartCoroutine(blackPannel.FadeOut());
