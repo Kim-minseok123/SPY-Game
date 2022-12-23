@@ -6,7 +6,7 @@ public class TitleManager : MonoBehaviour
 {
     // Start is called before the first frame update
     void Awake() {
-        Screen.SetResolution(1080, 1920, false);
+        Screen.SetResolution(540, 960, false);
     }
     void Start() {
         BlackPannel blackPannel = BlackPannel.instance;

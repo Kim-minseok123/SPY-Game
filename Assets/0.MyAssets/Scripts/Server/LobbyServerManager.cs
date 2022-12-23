@@ -12,10 +12,12 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
     public TMP_InputField NickNameInput;
     public GameObject AfterObject;
     public GameObject BeforeObject;
+    public TMP_InputField RoomNameInput;
+    int RoomName = 10000000;
     
-    void Awake()=> Screen.SetResolution(1080, 1920, false);
+    void Awake()=> Screen.SetResolution(540, 960, false);
 
-    void Update() => StatusText.text = PhotonNetwork.NetworkClientState.ToString();
+    void Update() => StatusText.text = PhotonNetwork.NetworkClientState.ToString() + RoomName.ToString();
 
     public void Connect() { 
         if (NickNameInput.text.Equals("")) { Debug.Log("닉네임을 입력해주세요"); return; } 
@@ -23,31 +25,57 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
     }
 
     public override void OnConnectedToMaster() {
+        PhotonNetwork.JoinLobby();
+    }
+
+    public void Disconnect() { 
+        PhotonNetwork.Disconnect();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+   UnityEngine.Application.Quit();
+#endif
+    }
+    public override void OnDisconnected(DisconnectCause cause) => print("서버 연결 끊김");
+
+    public void JoinLobby() => PhotonNetwork.JoinLobby();
+    public override void OnJoinedLobby() {
         print("서버 접속 성공");
         PhotonNetwork.LocalPlayer.NickName = NickNameInput.text;
         Logo.SetTrigger("Start");
         AfterObject.SetActive(true);
         BeforeObject.SetActive(false);
     }
+    public void CreateRoom() {
+        RoomName = Random.Range(10000000, 100000000);
+        PhotonNetwork.CreateRoom(RoomName.ToString(), new RoomOptions { MaxPlayers = 8 }); 
 
-    public void Disconnect() => PhotonNetwork.Disconnect();
-    public override void OnDisconnected(DisconnectCause cause) => print("서버 연결 끊김");
-
-    public void JoinLobby() => PhotonNetwork.JoinLobby();
-    public override void OnJoinedLobby() => print("로비 접속 성공");
-    //public void CreateRoom() => PhotonNetwork.CreateRoom(roomInput.text, new RoomOptions { MaxPlayers = 2 });
+    }
 
     //public void JoinRoom() => PhotonNetwork.JoinRoom(roomInput.text);
 
     //public void JoinOrCreateRoom() => PhotonNetwork.JoinOrCreateRoom(roomInput.text, new RoomOptions { MaxPlayers = 2 }, null);
 
-    public void JoinRandomRoom() => PhotonNetwork.JoinRandomRoom();
+    public void JoinRoom() {
+        if (RoomNameInput.text.Equals("")) { print("방 이름 없음"); return; }
+        PhotonNetwork.JoinRoom(RoomNameInput.text); 
+    }
 
     public void LeaveRoom() => PhotonNetwork.LeaveRoom();
 
-    public override void OnCreatedRoom() => print("방만들기완료");
+    public override void OnCreatedRoom()
+    {
+        AfterObject.SetActive(false);
+        LobbyClientManager.instanse.RoomUIOn();
+        print("방만들기완료");
+    }
 
-    public override void OnJoinedRoom() => print("방참가완료");
+    public override void OnJoinedRoom() {
+        AfterObject.SetActive(false);
+        LobbyClientManager.instanse.JoinRoomUIOff();
+        LobbyClientManager.instanse.RoomUIOn();
+        print("방참가완료"); 
+    }
 
     public override void OnCreateRoomFailed(short returnCode, string message) => print("방만들기실패");
 
