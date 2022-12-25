@@ -15,9 +15,14 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
     public TMP_InputField RoomNameInput;
     public TextMeshProUGUI PlayerList;
     public TextMeshProUGUI RoomInfo;
+    public GameObject GameStartBtn;
+
     int RoomName = 10000000;
-    
-    void Awake()=> Screen.SetResolution(540, 960, false);
+
+    void Awake() { 
+        Screen.SetResolution(540, 960, false);
+        PhotonNetwork.AutomaticallySyncScene = true;
+    }
 
     void Update() => StatusText.text = PhotonNetwork.NetworkClientState.ToString() + RoomName.ToString();
 
@@ -75,6 +80,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         AfterObject.SetActive(false);
         LobbyClientManager.instanse.JoinRoomUIOff();
         LobbyClientManager.instanse.RoomUIOn();
+        GameStartBtn.SetActive(false);
         Info();
         print("방참가완료"); 
     }
@@ -87,24 +93,32 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.InRoom)
         {
             PlayerList.text = "";
-            RoomInfo.text = "방 이름 : \n" + PhotonNetwork.CurrentRoom.Name + "\n\n\n\n\n\n\n\n\n" 
-                + PhotonNetwork.CurrentRoom.PlayerCount + "명 / 최대 " 
-                + PhotonNetwork.CurrentRoom.MaxPlayers +"명";
+            RoomInfo.text = "방 이름 : \n" + PhotonNetwork.CurrentRoom.Name + "\n\n\n\n\n\n\n\n\n"
+                + PhotonNetwork.CurrentRoom.PlayerCount + "명 / 최대 "
+                + PhotonNetwork.CurrentRoom.MaxPlayers + "명";
 
             for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
                 PlayerList.text += PhotonNetwork.PlayerList[i].NickName + "\n";
-
+            if (PhotonNetwork.IsMasterClient) {
+                GameStartBtn.SetActive(true);
+            }
         }
     }
 
+    public void GameStartButton() {
+        if (PhotonNetwork.CurrentRoom.PlayerCount < 4 || !PhotonNetwork.IsMasterClient) { print("인원이 너무 적습니다.");  return; }
+        photonView.RPC("GameStart", RpcTarget.AllBuffered);
+    }
+    [PunRPC]
     public void GameStart() {
-        if (PhotonNetwork.CurrentRoom.PlayerCount < 4) { print("인원이 너무 적습니다.");  return; }
         StartCoroutine(GameMapStart());
     }
+    
     public IEnumerator GameMapStart()
     {
         BlackPannel blackPannel = BlackPannel.instance;
         yield return StartCoroutine(blackPannel.FadeIn());
-        //게임 씬 이동
+        yield return new WaitForSeconds(1f);
+        yield return StartCoroutine(blackPannel.FadeOut());
     }
 }
