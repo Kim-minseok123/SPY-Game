@@ -99,7 +99,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
 
             for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
                 PlayerList.text += PhotonNetwork.PlayerList[i].NickName + "\n";
-            if (PhotonNetwork.IsMasterClient) {
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount >= 4) {
                 GameStartBtn.SetActive(true);
             }
         }
