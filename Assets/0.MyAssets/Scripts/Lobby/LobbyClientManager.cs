@@ -7,15 +7,15 @@ public class LobbyClientManager : MonoBehaviour
     public GameObject JoinRoomUI;
     public GameObject RoomUI;
     public TMP_InputField Roomname;
-    public static LobbyClientManager instanse;
+    public static LobbyClientManager instance;
     // Start is called before the first frame update
     private void Awake()
     {
-        if (instanse != null) {
+        if (instance != null) {
             Destroy(gameObject);
             return;
         }
-        instanse = this;
+        instance = this;
     }
     void Start()
     {

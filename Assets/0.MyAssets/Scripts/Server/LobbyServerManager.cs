@@ -65,21 +65,21 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
 
     public void LeaveRoom() { 
         PhotonNetwork.LeaveRoom();
-        LobbyClientManager.instanse.RoomUIOff();
+        LobbyClientManager.instance.RoomUIOff();
         AfterObject.SetActive(true);
     }
 
     public override void OnCreatedRoom()
     {
         AfterObject.SetActive(false);
-        LobbyClientManager.instanse.RoomUIOn();
+        LobbyClientManager.instance.RoomUIOn();
         print("방만들기완료");
     }
 
     public override void OnJoinedRoom() {
         AfterObject.SetActive(false);
-        LobbyClientManager.instanse.JoinRoomUIOff();
-        LobbyClientManager.instanse.RoomUIOn();
+        LobbyClientManager.instance.JoinRoomUIOff();
+        LobbyClientManager.instance.RoomUIOn();
         GameStartBtn.SetActive(false);
         Info();
         print("방참가완료"); 
@@ -92,6 +92,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.InRoom)
         {
+            GameStartBtn.SetActive(false);
             PlayerList.text = "";
             RoomInfo.text = "방 이름 : \n" + PhotonNetwork.CurrentRoom.Name + "\n\n\n\n\n\n\n\n\n"
                 + PhotonNetwork.CurrentRoom.PlayerCount + "명 / 최대 "
@@ -119,6 +120,8 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         BlackPannel blackPannel = BlackPannel.instance;
         yield return StartCoroutine(blackPannel.FadeIn());
         yield return new WaitForSeconds(1f);
+        LobbyClientManager.instance.RoomUIOff();
+        GameServerManager.instance.GameStart();
         yield return StartCoroutine(blackPannel.FadeOut());
     }
 }
