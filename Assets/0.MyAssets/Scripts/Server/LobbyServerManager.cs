@@ -5,6 +5,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine.UI;
 using TMPro;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 public class LobbyServerManager : MonoBehaviourPunCallbacks
 {
     public Animator Logo;
@@ -55,8 +56,10 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
     }
     public void CreateRoom() {
         RoomName = Random.Range(10000000, 100000000);
-        PhotonNetwork.CreateRoom(RoomName.ToString(), new RoomOptions { MaxPlayers = 8 }); 
-
+        RoomOptions roomOption = new RoomOptions();
+        roomOption.MaxPlayers = 8;
+        roomOption.CustomRoomProperties = new Hashtable() { { "IsSpy", false }, { "Value" , -100}, {"IsVote", false} };
+        PhotonNetwork.CreateRoom(RoomName.ToString(), roomOption, null);
     }
 
     public void JoinRoom() {
