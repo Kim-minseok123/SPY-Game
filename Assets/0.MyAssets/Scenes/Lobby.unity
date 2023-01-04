@@ -1194,7 +1194,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &181257499
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2518,7 +2518,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &418437913
 MonoBehaviour:
@@ -4832,7 +4832,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &762429318
 GameObject:
@@ -7181,6 +7181,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1060122796}
   - component: {fileID: 1060122795}
+  - component: {fileID: 1060122797}
   m_Layer: 0
   m_Name: GameServerManager
   m_TagString: Untagged
@@ -7204,12 +7205,12 @@ MonoBehaviour:
   MainTextObj: {fileID: 143084840}
   MainText: {fileID: 143084842}
   SelectButtonGroup: {fileID: 398081019}
-  Button:
+  Buttons:
   - {fileID: 329908887}
   - {fileID: 1448859259}
+  - {fileID: 1065845144}
   - {fileID: 1776947901}
   - {fileID: 671567103}
-  - {fileID: 1065845144}
   SelectPlayerButton:
   - {fileID: 816111806}
   - {fileID: 1044170299}
@@ -7249,6 +7250,7 @@ MonoBehaviour:
   - {fileID: 475505883}
   - {fileID: 1904686152}
   TimerText: {fileID: 1433869757}
+  State: -1
 --- !u!4 &1060122796
 Transform:
   m_ObjectHideFlags: 0
@@ -7263,6 +7265,28 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1060122797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060122794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 2
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1065845144
 GameObject:
   m_ObjectHideFlags: 0
@@ -7316,7 +7340,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1075290014
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7374,7 +7398,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -40, y: 130}
+  m_AnchoredPosition: {x: -40, y: -427}
   m_SizeDelta: {x: 1200, y: 800}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1079904997
