@@ -68,7 +68,6 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         {
             if(time > 0) { time -= Time.deltaTime; return; }
             QuestionRandom();
-            photonView.RPC("QuestionOpen", RpcTarget.All, index);
             QS = false;
             time = 60;
         } 
@@ -102,6 +101,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     }
     public void QuestionRandom() {
         index = Random.Range(0, 5);
+        photonView.RPC("QuestionOpen", RpcTarget.AllBuffered, index);
     }
     [PunRPC]
     public void QuestionOpen(int index) {
@@ -127,7 +127,9 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         }
         Hashtable cp;
         cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        if (cp["IsSpy"].ToString().Equals("1")) {
+        string temp = cp["IsSpy"].ToString();
+        if (temp.Equals("1"))
+        {
             MainText.text = "당신은 스파이입니다. 신중하게 투표해주세요.";
         }
         else
@@ -141,7 +143,8 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 {
                     Hashtable cp;
                     cp = PhotonNetwork.PlayerList[i].CustomProperties;
-                    if (cp["IsVote"].ToString().Equals("0")) {
+                    string temp = cp["IsVote"].ToString();
+                    if (temp.Equals("0")) {
                         Debug.Log("아직 투표 덜함");
                         return;
                     }

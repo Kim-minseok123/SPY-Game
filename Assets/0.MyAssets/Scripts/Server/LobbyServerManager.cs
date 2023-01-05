@@ -58,7 +58,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         RoomName = Random.Range(10000000, 100000000);
         RoomOptions roomOption = new RoomOptions();
         roomOption.MaxPlayers = 8;
-        roomOption.CustomRoomProperties = new Hashtable() { { "IsSpy", "0" }, { "Value" , "-100"}, {"IsVote", "0"} };
+        roomOption.CustomRoomProperties = new Hashtable() { { "IsSpy", "0" }, { "Value", "-100" }, { "IsVote", "0" } };
         PhotonNetwork.CreateRoom(RoomName.ToString(), roomOption, null);
     }
 
