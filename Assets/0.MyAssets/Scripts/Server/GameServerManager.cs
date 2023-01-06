@@ -43,10 +43,10 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public int PlayerID = -1;
 
     private bool isSpy = false;
-    private int Value = -100;
+    private string Value = "-100";
     private bool isVote = false;
     private bool[] PlayerVote;
-    private int[] PlayerValues;
+    private string[] PlayerValues;
     private void Awake()
     {
         if (instance != null)
@@ -55,7 +55,6 @@ public class GameServerManager : MonoBehaviourPunCallbacks
             return;
         }
         instance = this;
-        time = 3f;
         Question = new string[5];
         QuestionType = new int[5];
         Question[0] = "당신은 이번 달에 영화를 몇편을 봤습니까?";
@@ -83,7 +82,6 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         else if (State == 1) {
             if (time > 0) {
                 time -= Time.deltaTime;
-                photonView.RPC("EndQuestion", RpcTarget.All);
                 photonView.RPC("UpdateTime", RpcTarget.All, time);
             }
         }
@@ -91,14 +89,18 @@ public class GameServerManager : MonoBehaviourPunCallbacks
 
     public void GameStart() {
         GamePannel.SetActive(true);
+        isSpy = false;
+        Value = "-100";
+        isVote = false;
         //게임 시작
         if (PhotonNetwork.IsMasterClient) {
             int SpyNumber = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount);
             photonView.RPC("SetSpy", RpcTarget.All, SpyNumber);
             PlayerVote = new bool[PhotonNetwork.CurrentRoom.PlayerCount];
-            PlayerValues = new int[PhotonNetwork.CurrentRoom.PlayerCount];
+            PlayerValues = new string[PhotonNetwork.CurrentRoom.PlayerCount];
             for (int i = 0; i < PlayerVote.Length; i++) PlayerVote[i] = false;
             QS = true;
+            time = 3f;
             State = 0;
         }
     }
@@ -107,11 +109,12 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         if (SpyNumber == PlayerID) { isSpy = true; }
     }
     public void QuestionRandom() {
-        index = Random.Range(0, 5);
+        index = Random.Range(0, Question.Length);
         photonView.RPC("QuestionOpen", RpcTarget.All, index);
     }
     [PunRPC]
     public void QuestionOpen(int index) {
+        this.index = index;
         for (int j = 0; j < 5; j++) Buttons[j].SetActive(false);
         MainTextObj.SetActive(true);
         SelectButtonGroup.SetActive(true);
@@ -130,6 +133,10 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 break;
             case 5:
                 Buttons[4].SetActive(true);
+                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+                    SelectPlayetName[i].text = PhotonNetwork.PlayerList[i].NickName;
+                    SelectPlayerButton[i].SetActive(true);
+                }
                 break;
         }
         if (isSpy)
@@ -141,19 +148,28 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    public void SetVote(int index, int Values) {
+    public void SetVote(int index, string Values) {
         PlayerVote[index] = true;
         PlayerValues[index] = Values;
         for (int i = 0; i < PlayerVote.Length; i++) {
             if (PlayerVote[i] != true) { return; }
         }
         State = 1;
+        photonView.RPC("EndQuestion", RpcTarget.All, PlayerValues);
     }
     [PunRPC]
-    public void EndQuestion() {
+    public void EndQuestion(string[] vs) {
+        PlayerValue.text = "";
         MainTextObj.SetActive(false);
         SelectButtonGroup.SetActive(false);
         PlayerResult.SetActive(true);
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        {
+            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : " + vs[i] + "\n";
+            PlayetVoteName[i].text = PhotonNetwork.PlayerList[i].NickName;
+            PlayerVoteButton[i].SetActive(true);
+        }
+        
     }
     [PunRPC]
     public void UpdateTime(float timer) {
@@ -161,69 +177,77 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     }
     public void Value_Zero() {
         isVote = true;
-        Value = 0;
+        Value = "0";
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_One() {
         isVote = true;
-        Value = 1;
+        Value = "1";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[0].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Two()
     {
         isVote = true;
-        Value = 2;
+        Value = "2";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[1].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Three()
     {
         isVote = true;
-        Value = 3;
+        Value = "3";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[2].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Four()
     {
         isVote = true;
-        Value = 4;
+        Value = "4";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[3].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Five()
     {
         isVote = true;
-        Value = 5;
+        Value = "5";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[4].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Six()
     {
         isVote = true;
-        Value = 6;
+        Value = "6";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[5].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Seven()
     {
         isVote = true;
-        Value = 7;
+        Value = "7";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[6].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Eight()
     {
         isVote = true;
-        Value = 8;
+        Value = "8";
+        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[7].NickName; }
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Nine()
     {
         isVote = true;
-        Value = 9;
+        Value = "9";
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
