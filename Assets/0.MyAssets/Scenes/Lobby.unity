@@ -9615,6 +9615,7 @@ MonoBehaviour:
   - {fileID: 572482976}
   - {fileID: 42068403}
   CurrentValue: {fileID: 1041847121}
+  PlayerResult: {fileID: 954600655}
   PlayerValue: {fileID: 1834664006}
   PlayerVoteButton:
   - {fileID: 996514946}
@@ -9636,6 +9637,7 @@ MonoBehaviour:
   - {fileID: 1904686152}
   TimerText: {fileID: 1433869757}
   State: -1
+  PlayerID: -1
 --- !u!4 &1060122796
 Transform:
   m_ObjectHideFlags: 0

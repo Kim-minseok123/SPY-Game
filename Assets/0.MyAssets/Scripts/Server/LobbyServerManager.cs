@@ -85,7 +85,18 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         LobbyClientManager.instance.RoomUIOn();
         GameStartBtn.SetActive(false);
         Info();
-        print("방참가완료"); 
+        print("방참가완료");
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+        Player[] sortedPlayers = PhotonNetwork.PlayerList;
+
+        for (int i = 0; i < sortedPlayers.Length; i += 1)
+        {
+            if (sortedPlayers[i].ActorNumber == actorNumber)
+            {
+                GameServerManager.instance.PlayerID = i;
+                break;
+            }
+        }
     }
     public override void OnPlayerEnteredRoom(Player newPlayer) => Info();
     public override void OnPlayerLeftRoom(Player otherPlayer) => Info();

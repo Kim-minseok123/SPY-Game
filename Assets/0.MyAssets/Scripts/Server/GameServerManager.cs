@@ -26,6 +26,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     //현재 누른 값
     public TextMeshProUGUI CurrentValue;
     //플레이어 값
+    public GameObject PlayerResult;
     public TextMeshProUGUI PlayerValue;
     public GameObject[] PlayerVoteButton;
     public TextMeshProUGUI[] PlayetVoteName;
@@ -38,6 +39,14 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public int State = -1;
     bool QS = false;
     private float time;
+
+    public int PlayerID = -1;
+
+    private bool isSpy = false;
+    private int Value = -100;
+    private bool isVote = false;
+    private bool[] PlayerVote;
+    private int[] PlayerValues;
     private void Awake()
     {
         if (instance != null)
@@ -66,42 +75,40 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         //타이머   
         if (State == 0 && QS)
         {
-            if(time > 0) { time -= Time.deltaTime; return; }
+            if (time > 0) { time -= Time.deltaTime; return; }
             QuestionRandom();
             QS = false;
             time = 60;
-        } 
+        }
+        else if (State == 1) {
+            if (time > 0) {
+                time -= Time.deltaTime;
+                photonView.RPC("EndQuestion", RpcTarget.All);
+                photonView.RPC("UpdateTime", RpcTarget.All, time);
+            }
+        }
     }
 
     public void GameStart() {
         GamePannel.SetActive(true);
         //게임 시작
         if (PhotonNetwork.IsMasterClient) {
-            Hashtable cp;
-            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
-                cp = PhotonNetwork.PlayerList[i].CustomProperties;
-                cp["IsSpy"] = "0";
-                cp["IsVote"] = "0";
-                cp["Value"] = "-100";
-            }
-            int SpyNumber = Random.Range(0, PhotonNetwork.CountOfPlayers);
-            Debug.Log(SpyNumber);
-            cp = PhotonNetwork.PlayerList[SpyNumber].CustomProperties;
-            cp["IsSpy"] = "1";
-            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-            {
-                cp = PhotonNetwork.PlayerList[i].CustomProperties;
-                Debug.Log(cp["IsSpy"].ToString());
-                Debug.Log(cp["IsVote"].ToString());
-                Debug.Log(cp["Value"].ToString());
-            }
+            int SpyNumber = Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount);
+            photonView.RPC("SetSpy", RpcTarget.All, SpyNumber);
+            PlayerVote = new bool[PhotonNetwork.CurrentRoom.PlayerCount];
+            PlayerValues = new int[PhotonNetwork.CurrentRoom.PlayerCount];
+            for (int i = 0; i < PlayerVote.Length; i++) PlayerVote[i] = false;
             QS = true;
             State = 0;
         }
     }
+    [PunRPC]
+    public void SetSpy(int SpyNumber) {
+        if (SpyNumber == PlayerID) { isSpy = true; }
+    }
     public void QuestionRandom() {
         index = Random.Range(0, 5);
-        photonView.RPC("QuestionOpen", RpcTarget.AllBuffered, index);
+        photonView.RPC("QuestionOpen", RpcTarget.All, index);
     }
     [PunRPC]
     public void QuestionOpen(int index) {
@@ -125,108 +132,100 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 Buttons[4].SetActive(true);
                 break;
         }
-        Hashtable cp;
-        cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        string temp = cp["IsSpy"].ToString();
-        if (temp.Equals("1"))
+        if (isSpy)
         {
             MainText.text = "당신은 스파이입니다. 신중하게 투표해주세요.";
         }
         else
             MainText.text = Question[index];
     }
-    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) {
-        if (PhotonNetwork.IsMasterClient) {
-            if (State == 0)
-            {
-                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-                {
-                    Hashtable cp;
-                    cp = PhotonNetwork.PlayerList[i].CustomProperties;
-                    string temp = cp["IsVote"].ToString();
-                    if (temp.Equals("0")) {
-                        Debug.Log("아직 투표 덜함");
-                        return;
-                    }
-                }
-                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-                {
-                    Hashtable cp;
-                    cp = PhotonNetwork.PlayerList[i].CustomProperties;
-                    cp["IsVote"] = "0";
-                }
-                State = 1;
-                Debug.Log("투표 함");
-            }
+
+    [PunRPC]
+    public void SetVote(int index, int Values) {
+        PlayerVote[index] = true;
+        PlayerValues[index] = Values;
+        for (int i = 0; i < PlayerVote.Length; i++) {
+            if (PlayerVote[i] != true) { return; }
         }
+        State = 1;
+    }
+    [PunRPC]
+    public void EndQuestion() {
+        MainTextObj.SetActive(false);
+        SelectButtonGroup.SetActive(false);
+        PlayerResult.SetActive(true);
+    }
+    [PunRPC]
+    public void UpdateTime(float timer) {
+        TimerText.text = "남은시간 : \n"+((int)timer).ToString() + " 초";
     }
     public void Value_Zero() {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "0";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 0;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_One() {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "1";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 1;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Two()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "2";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 2;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Three()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "3";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 3;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Four()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "4";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 4;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Five()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "5";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 5;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Six()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "6";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 6;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Seven()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "7";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 7;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Eight()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "8";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 8;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void Value_Nine()
     {
-        Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
-        cp["Value"] = "9";
-        cp["IsVote"] = "1";
-        CurrentValue.text = "현재 선택한 값 : " + cp["Value"].ToString();
+        isVote = true;
+        Value = 9;
+        photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
+        CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
     }
     public void GameStop()
     {
