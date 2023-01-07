@@ -54,6 +54,9 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     private bool[] PlayerVote;
     private string[] PlayerValues;
     private int[] count;
+
+    private bool isOut = false;
+    List<int> OutNumber;
     private void Awake()
     {
         if (instance != null)
@@ -114,16 +117,19 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         isSpy = false;
         Value = "-100";
         isVote = false;
+        isOut = false;
+        OutNumber = new List<int>();
         //게임 시작
         if (PhotonNetwork.IsMasterClient) {
             int SpyNumber = UnityEngine.Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount);
-            photonView.RPC("SetSpy", RpcTarget.All, SpyNumber);
             PlayerVote = new bool[PhotonNetwork.CurrentRoom.PlayerCount];
             PlayerValues = new string[PhotonNetwork.CurrentRoom.PlayerCount];
             count = new int[PhotonNetwork.CurrentRoom.PlayerCount];
+            photonView.RPC("SetSpy", RpcTarget.All, SpyNumber);
             QS = true;
             time = 3f;
             State = 0;
+            Debug.Log(SpyNumber);
         }
     }
     [PunRPC]
@@ -131,7 +137,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         if (SpyNumber == PlayerID) { isSpy = true; }
     }
     public void QuestionRandom() {
-        index = UnityEngine.Random.Range(4, Question.Length);
+        index = UnityEngine.Random.Range(0, Question.Length);
         for (int i = 0; i < PlayerVote.Length; i++) PlayerVote[i] = false;
         for (int i = 0; i < PlayerValues.Length; i++) PlayerValues[i] = "";
         photonView.RPC("QuestionOpen", RpcTarget.All, index);
@@ -143,9 +149,18 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         isVote = false;
         CurrentValue.text = "현재 선택한 값 : ";
         for (int j = 0; j < 5; j++) Buttons[j].SetActive(false);
-        MainTextObj.SetActive(true);
         SelectButtonGroup.SetActive(true);
-        switch (QuestionType[index]) {
+        MainTextObj.SetActive(true);
+        if (isSpy)
+        {
+            MainText.text = "당신은 스파이입니다. 신중하게 투표해주세요.";
+        }
+        else
+            MainText.text = Question[index];
+
+        if (isOut) { CurrentValue.text = ""; photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, "-1"); return; }
+        switch (QuestionType[index])
+        {
             case 1:
                 Buttons[0].SetActive(true);
                 break;
@@ -160,18 +175,14 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 break;
             case 5:
                 Buttons[4].SetActive(true);
-                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++) {
+                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+                {
+                    if (OutNumber.Contains(i)) continue;
                     SelectPlayetName[i].text = PhotonNetwork.PlayerList[i].NickName;
                     SelectPlayerButton[i].SetActive(true);
                 }
                 break;
         }
-        if (isSpy)
-        {
-            MainText.text = "당신은 스파이입니다. 신중하게 투표해주세요.";
-        }
-        else
-            MainText.text = Question[index];
     }
 
     [PunRPC]
@@ -190,16 +201,19 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         SelectButtonGroup.SetActive(false);
         PlayerResult.SetActive(true);
         PlayerVoteBtn.SetActive(true);
+        MainText.text = Question[index];
         CurrentVote.text = "";
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
-            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : " + vs[i] + "\n";
+            PlayerVoteButton[i].SetActive(false);
+            if (OutNumber.Contains(i)) continue;
+            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + vs[i] + "\n\n";
             PlayetVoteName[i].text = PhotonNetwork.PlayerList[i].NickName;
             PlayerVoteButton[i].SetActive(true);
             if(PhotonNetwork.IsMasterClient)
                 PlayerValues[i] = "";
         }
-        
+        if(isOut) { PlayerVoteBtn.SetActive(false); }
     }
     [PunRPC]
     public void PlayerVoteToAnother(int index, string Values) {
@@ -221,8 +235,9 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         bool isit = false;
         int max = count.Max();
         int indexofMax = Array.IndexOf(count, max);
-        count.OrderBy(x => x).ToArray();
-        if (count[1] == max) isit = true;
+        for (int i = 0; i < count.Length; i++) { 
+            if(count[i] == max && i != indexofMax) isit = true;
+        }
         photonView.RPC("Result", RpcTarget.All, count, indexofMax,isit);
     }
     [PunRPC]
@@ -231,15 +246,19 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         PlayerVoteBtn.SetActive(false);
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
-            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : " + c[i] + "표\n";
+            if (OutNumber.Contains(i)) continue;
+            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + c[i] + "표\n\n";
             if (PhotonNetwork.IsMasterClient)
                 PlayerValues[i] = "";
         }
         if (isit){ 
             PlayerValue.text += "\n\n" + "아무도 탈락하지 않았습니다."; return;
         }
-        PlayerValue.text += "\n\\n"+PhotonNetwork.PlayerList[indexofMax].NickName + "님 탈락";
+        PlayerValue.text += "\n\n"+PhotonNetwork.PlayerList[indexofMax].NickName + "님 탈락";
         //탈락 이벤트
+        if (indexofMax == PlayerID) isOut = true;
+        OutNumber.Add(indexofMax);
+        
     }
     [PunRPC]
     public void EndResult() {
