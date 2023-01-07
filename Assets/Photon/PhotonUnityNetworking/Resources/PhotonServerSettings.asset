@@ -46,6 +46,10 @@ MonoBehaviour:
   - SetVote
   - EndQuestion
   - UpdateTime
+  - EndResult
+  - EndVote
+  - PlayerVoteToAnother
+  - Result
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
