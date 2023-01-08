@@ -122,7 +122,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
 
     public void GameStartButton() {
         if (PhotonNetwork.CurrentRoom.PlayerCount < 4 || !PhotonNetwork.IsMasterClient) { print("인원이 너무 적습니다.");  return; }
-        photonView.RPC("GameStart", RpcTarget.AllBuffered);
+        photonView.RPC("GameStart", RpcTarget.All);
     }
     [PunRPC]
     public void GameStart() {

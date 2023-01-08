@@ -47,6 +47,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public int PlayerID = -1;
 
     private bool isSpy = false;
+    private int NumberOfSpy;
     private string Value = "-100";
     private bool isVote = false;
 
@@ -65,8 +66,9 @@ public class GameServerManager : MonoBehaviourPunCallbacks
             return;
         }
         instance = this;
-        Question = new string[5];
-        QuestionType = new int[5];
+        Question = new string[30];
+        QuestionType = new int[30];
+        //type 1 : 0~9, type 2: 예 아니오, type 3: 전혀, 때때로, 자주, type 4 :1 ~ 5 ,type 5 : 플레이어
         Question[0] = "당신은 이번 달에 영화를 몇편을 봤습니까?";
         QuestionType[0] = 1;
         Question[1] = "차가운 피자를 좋아하시나요?";
@@ -77,6 +79,58 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         QuestionType[3] = 4;
         Question[4] = "가장 도박을 잘할거 같은 사람은 누구인가요?";
         QuestionType[4] = 5;
+        Question[5] = "얼마나 자주 부모님께 진실을 말합니까?";
+        QuestionType[5] = 3;
+        Question[6] = "당신의 키는 보통인가요?";
+        QuestionType[6] = 2;
+        Question[7] = "당신은 썸남/녀를 만나기위해서 절친과의 약속을 버릴 수 있나요?";
+        QuestionType[7] = 2;
+        Question[8] = "고양이를 좋아하시나요?";
+        QuestionType[8] = 2;
+        Question[9] = "당신은 스시를 얼마나 자주 먹습니까?";
+        QuestionType[9] = 4;
+        Question[10] = "학교를 땡땡이 쳐본적이 있나요?";
+        QuestionType[10] = 2;
+        Question[11] = "얼마나 자주 모자를 쓰나요?";
+        QuestionType[11] = 3;
+        Question[12] = "내가 싸워서 이길거 같은 사람은 누구인가요?";
+        QuestionType[12] = 5;
+        Question[13] = "당신은 얼마나 평범한 사람인가요?";
+        QuestionType[13] = 4;
+        Question[14] = "당신이 카지노에서 돈을 쓸 가능성은 어느정도 되나요?";
+        QuestionType[14] = 1;
+        Question[15] = "가장 터프한 사람은 누구인가요?";
+        QuestionType[15] = 5;
+        Question[16] = "플러팅을 자주하는 사람은 누구인가요?";
+        QuestionType[16] = 5;
+        Question[17] = "파인애플 피자에 대한 당신의 의견은 어느정도 입니까?";
+        QuestionType[17] = 4;
+        Question[18] = "얼마나 자주 핸드폰으로 통화를 하나요?";
+        QuestionType[18] = 4;
+        Question[19] = "당신은 얼마나 논리적인 사람인가요?";
+        QuestionType[19] = 4;
+        Question[20] = "여태까지 결혼식에 몇번정도 가봤나요?";
+        QuestionType[20] = 1;
+        Question[21] = "현대 미술은 과대평가를 받고 계신다고 생각합니까?";
+        QuestionType[21] = 2;
+        Question[22] = "민트초코에 대한 당신의 의견은 어느정도 입니까?";
+        QuestionType[23] = 4;
+        Question[23] = "위기상황에 빠졌을 때, 가장 잘 대처할 것 같은 사람은 누구입니까?";
+        QuestionType[23] = 5;
+        Question[24] = "당신은 얼마나 '배운 사람'인가요?";
+        QuestionType[24] = 4;
+        Question[25] = "연애를 가장 많이 할 것 같은 사람은 누구입니까?";
+        QuestionType[25] = 5;
+        Question[26] = "가장 빨리 결혼을 할 것 같은 사람은 누구입니까?";
+        QuestionType[26] = 5;
+        Question[27] = "얼마나 자주 채소를 먹나요?";
+        QuestionType[27] = 3;
+        Question[28] = "영화관을 얼마나 즐기십니까?";
+        QuestionType[28] = 4;
+        Question[29] = "평소에 물을 자주 마시는 편인가요?";
+        QuestionType[29] = 4;
+
+
     }
     // Update is called once per frame
     void Update()
@@ -85,6 +139,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         if (State == 0 && QS)
         {
             if (time > 0) { time -= Time.deltaTime; return; }
+            photonView.RPC("SetSpy", RpcTarget.All, NumberOfSpy);
             QuestionRandom();
             QS = false;
             time = 60;
@@ -103,12 +158,24 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 time = 10;
             }
         }
-        else if (State == 2) {
+        else if (State == 2)
+        {
             if (time > 0) { time -= Time.deltaTime; photonView.RPC("UpdateTime", RpcTarget.All, time); return; }
             photonView.RPC("EndResult", RpcTarget.All);
             State = 0;
             QS = true;
             time = 3;
+        }
+        else if (State == 3)
+        {
+            if (time > 0)
+            {
+                time -= Time.deltaTime;
+                TimerText.text = "남은시간 : \n" + ((int)time).ToString() + " 초";
+                return;
+            }
+            State = -1;
+            GameStop();
         }
     }
 
@@ -118,6 +185,9 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         Value = "-100";
         isVote = false;
         isOut = false;
+        State = -1;
+        QS = false;
+        NumberOfSpy = -1;
         OutNumber = new List<int>();
         //게임 시작
         if (PhotonNetwork.IsMasterClient) {
@@ -125,16 +195,18 @@ public class GameServerManager : MonoBehaviourPunCallbacks
             PlayerVote = new bool[PhotonNetwork.CurrentRoom.PlayerCount];
             PlayerValues = new string[PhotonNetwork.CurrentRoom.PlayerCount];
             count = new int[PhotonNetwork.CurrentRoom.PlayerCount];
-            photonView.RPC("SetSpy", RpcTarget.All, SpyNumber);
+            NumberOfSpy = SpyNumber;
             QS = true;
             time = 3f;
             State = 0;
-            Debug.Log(SpyNumber);
+            Debug.Log(NumberOfSpy);
         }
     }
     [PunRPC]
     public void SetSpy(int SpyNumber) {
         if (SpyNumber == PlayerID) { isSpy = true; }
+        Debug.Log(isSpy);
+        NumberOfSpy = SpyNumber;
     }
     public void QuestionRandom() {
         index = UnityEngine.Random.Range(0, Question.Length);
@@ -197,7 +269,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     }
     [PunRPC]
     public void EndQuestion(string[] vs) {
-        PlayerValue.text = "";
+        PlayerValue.text = "\n";
         SelectButtonGroup.SetActive(false);
         PlayerResult.SetActive(true);
         PlayerVoteBtn.SetActive(true);
@@ -207,7 +279,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         {
             PlayerVoteButton[i].SetActive(false);
             if (OutNumber.Contains(i)) continue;
-            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + vs[i] + "\n\n";
+            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + vs[i] + "\n";
             PlayetVoteName[i].text = PhotonNetwork.PlayerList[i].NickName;
             PlayerVoteButton[i].SetActive(true);
             if(PhotonNetwork.IsMasterClient)
@@ -247,18 +319,31 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
             if (OutNumber.Contains(i)) continue;
-            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + c[i] + "표\n\n";
+            PlayerValue.text += PhotonNetwork.PlayerList[i].NickName + " : \t" + c[i] + "표\n";
             if (PhotonNetwork.IsMasterClient)
                 PlayerValues[i] = "";
         }
         if (isit){ 
             PlayerValue.text += "\n\n" + "아무도 탈락하지 않았습니다."; return;
         }
-        PlayerValue.text += "\n\n"+PhotonNetwork.PlayerList[indexofMax].NickName + "님 탈락";
+        PlayerValue.text += "\n\n"+PhotonNetwork.PlayerList[indexofMax].NickName + "님 탈락\n";
         //탈락 이벤트
         if (indexofMax == PlayerID) isOut = true;
         OutNumber.Add(indexofMax);
-        
+        if (NumberOfSpy == indexofMax)
+        {
+            PlayerValue.text += PhotonNetwork.PlayerList[indexofMax].NickName + "님은 '스파이' 입니다.\n 시민 승리!!";
+            State = 3;
+            time = 10;
+        }
+        else {
+            PlayerValue.text += PhotonNetwork.PlayerList[indexofMax].NickName + "님은 '스파이'가 아닙니다.";
+            if (PhotonNetwork.CurrentRoom.PlayerCount - OutNumber.Count <= 3) {
+                PlayerValue.text += "\n 스파이 승리!!";
+                State = 3;
+                time = 10;
+            }
+        }
     }
     [PunRPC]
     public void EndResult() {
@@ -268,14 +353,17 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public void Value_Zero() {
         isVote = true;
         Value = "0";
+        if (QuestionType[index] == 2) Value = "아니오.";
+        else if (QuestionType[index] == 3) Value = "전혀.";
         CurrentValue.text = "현재 선택한 값 : " + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
     }
     public void Value_One() {
         isVote = true;
         Value = "1";
-        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[0].NickName; }
-        Debug.Log(Value);
+        if (QuestionType[index] == 2) Value = "예.";
+        else if (QuestionType[index] == 3) Value = "때때로.";
+        else if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[0].NickName; }
         CurrentValue.text = "현재 선택한 값 : " + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
     }
@@ -283,7 +371,8 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     {
         isVote = true;
         Value = "2";
-        if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[1].NickName; }
+        if(QuestionType[index] == 3) { Value = "자주."; }
+        else if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[1].NickName; }
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
     }
@@ -392,7 +481,17 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     }
     public void GameStop()
     {
+        StartCoroutine(GameEnd());  
+    }
+    public IEnumerator GameEnd()
+    {
+        BlackPannel blackPannel = BlackPannel.instance;
+        yield return StartCoroutine(blackPannel.FadeIn());
+        yield return new WaitForSeconds(1f);
+        PlayerResult.SetActive(false);
+        MainTextObj.SetActive(false);
         GamePannel.SetActive(false);
         LobbyClientManager.instance.RoomUIOn();
+        yield return StartCoroutine(blackPannel.FadeOut());
     }
 }
