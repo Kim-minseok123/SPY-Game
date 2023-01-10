@@ -36,6 +36,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public TextMeshProUGUI CurrentVote;
     //타이머
     public TextMeshProUGUI TimerText;
+    public GameObject FadePannel;
     private int Timer;
     //0 : 질문 나옴, 1 : 투표
     private int index = 0;
@@ -50,7 +51,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     private int NumberOfSpy;
     private string Value = "-100";
     private bool isVote = false;
-
+    private bool isFade = false;
 
     private bool[] PlayerVote;
     private string[] PlayerValues;
@@ -138,7 +139,12 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         //타이머   
         if (State == 0 && QS)
         {
-            if (time > 0) { time -= Time.deltaTime; return; }
+            if (time > 0) {
+                if (!isFade) photonView.RPC("GameSetting", RpcTarget.All);
+                isFade = true;
+                time -= Time.deltaTime;
+                return;
+            }
             photonView.RPC("SetSpy", RpcTarget.All, NumberOfSpy);
             QuestionRandom();
             QS = false;
@@ -165,6 +171,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
             State = 0;
             QS = true;
             time = 3;
+            isFade = false;
         }
         else if (State == 3)
         {
@@ -175,6 +182,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
                 return;
             }
             State = -1;
+            isFade = false;
             GameStop();
         }
     }
@@ -338,7 +346,13 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         }
         else {
             PlayerValue.text += PhotonNetwork.PlayerList[indexofMax].NickName + "님은 '스파이'가 아닙니다.";
-            if (PhotonNetwork.CurrentRoom.PlayerCount - OutNumber.Count <= 3) {
+            if (PhotonNetwork.CurrentRoom.PlayerCount >= 5 &&PhotonNetwork.CurrentRoom.PlayerCount - OutNumber.Count <= 3) {
+                PlayerValue.text += "\n 스파이 승리!!";
+                State = 3;
+                time = 10;
+            }
+            else if(PhotonNetwork.CurrentRoom.PlayerCount < 5 && PhotonNetwork.CurrentRoom.PlayerCount - OutNumber.Count <= 2)
+            {
                 PlayerValue.text += "\n 스파이 승리!!";
                 State = 3;
                 time = 10;
@@ -353,16 +367,16 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     public void Value_Zero() {
         isVote = true;
         Value = "0";
-        if (QuestionType[index] == 2) Value = "아니오.";
-        else if (QuestionType[index] == 3) Value = "전혀.";
+        if (QuestionType[index] == 2) Value = "아니오";
+        else if (QuestionType[index] == 3) Value = "전혀";
         CurrentValue.text = "현재 선택한 값 : " + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
     }
     public void Value_One() {
         isVote = true;
         Value = "1";
-        if (QuestionType[index] == 2) Value = "예.";
-        else if (QuestionType[index] == 3) Value = "때때로.";
+        if (QuestionType[index] == 2) Value = "예";
+        else if (QuestionType[index] == 3) Value = "때때로";
         else if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[0].NickName; }
         CurrentValue.text = "현재 선택한 값 : " + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
@@ -371,7 +385,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     {
         isVote = true;
         Value = "2";
-        if(QuestionType[index] == 3) { Value = "자주."; }
+        if(QuestionType[index] == 3) { Value = "자주"; }
         else if (QuestionType[index] == 5) { Value = PhotonNetwork.PlayerList[1].NickName; }
         CurrentValue.text = "현재 선택한 값 : \t" + Value.ToString();
         photonView.RPC("SetVote", RpcTarget.MasterClient, PlayerID, Value);
@@ -492,6 +506,34 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         MainTextObj.SetActive(false);
         GamePannel.SetActive(false);
         LobbyClientManager.instance.RoomUIOn();
+        LobbyClientManager.instance.GameStartNoticeOn();
         yield return StartCoroutine(blackPannel.FadeOut());
+    }
+    [PunRPC]
+    public void GameSetting() {
+        StartCoroutine(FadeInOut());
+    }
+
+    //페이드 인
+    public IEnumerator FadeInOut()
+    {
+        Color c = FadePannel.GetComponent<Image>().color;
+        FadePannel.SetActive(true);
+        for (float f = 0f; f < 1; f += 0.02f)
+        {
+            c.a = f;
+            FadePannel.GetComponent<Image>().color = c;
+            yield return new WaitForSeconds(0.01f);
+        }
+        yield return new WaitForSeconds(3f);
+        FadePannel.SetActive(true);
+        for (float f = 1f; f > 0; f -= 0.02f)
+        {
+            c.a = f;
+            FadePannel.GetComponent<Image>().color = c;
+            yield return new WaitForSeconds(0.01f);
+        }
+        yield return new WaitForSeconds(1);
+        FadePannel.SetActive(false);
     }
 }

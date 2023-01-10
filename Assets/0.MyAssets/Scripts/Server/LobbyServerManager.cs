@@ -135,6 +135,7 @@ public class LobbyServerManager : MonoBehaviourPunCallbacks
         yield return StartCoroutine(blackPannel.FadeIn());
         yield return new WaitForSeconds(1f);
         LobbyClientManager.instance.RoomUIOff();
+        LobbyClientManager.instance.GameStartNoticeOff();
         GameServerManager.instance.GameStart();
         yield return StartCoroutine(blackPannel.FadeOut());
     }
