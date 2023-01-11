@@ -14,6 +14,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
     //스파이 게임 메인 질문
     string[] Question;
     int[] QuestionType;
+    List<int> QuestionIndex;
     //싱글톤
     public static GameServerManager instance;
     public GameObject GamePannel;
@@ -115,7 +116,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         Question[21] = "현대 미술은 과대평가를 받고 계신다고 생각합니까?";
         QuestionType[21] = 2;
         Question[22] = "민트초코에 대한 당신의 의견은 어느정도 입니까?";
-        QuestionType[23] = 4;
+        QuestionType[22] = 4;
         Question[23] = "위기상황에 빠졌을 때, 가장 잘 대처할 것 같은 사람은 누구입니까?";
         QuestionType[23] = 5;
         Question[24] = "당신은 얼마나 '배운 사람'인가요?";
@@ -130,8 +131,6 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         QuestionType[28] = 4;
         Question[29] = "평소에 물을 자주 마시는 편인가요?";
         QuestionType[29] = 4;
-
-
     }
     // Update is called once per frame
     void Update()
@@ -197,6 +196,7 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         QS = false;
         NumberOfSpy = -1;
         OutNumber = new List<int>();
+        QuestionIndex = new List<int>();
         //게임 시작
         if (PhotonNetwork.IsMasterClient) {
             int SpyNumber = UnityEngine.Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount);
@@ -217,7 +217,13 @@ public class GameServerManager : MonoBehaviourPunCallbacks
         NumberOfSpy = SpyNumber;
     }
     public void QuestionRandom() {
-        index = UnityEngine.Random.Range(0, Question.Length);
+        while (true) {
+            index = UnityEngine.Random.Range(0, Question.Length);
+            if (!QuestionIndex.Contains(index)) { 
+                QuestionIndex.Add(index);
+                break;
+            }
+        }
         for (int i = 0; i < PlayerVote.Length; i++) PlayerVote[i] = false;
         for (int i = 0; i < PlayerValues.Length; i++) PlayerValues[i] = "";
         photonView.RPC("QuestionOpen", RpcTarget.All, index);
